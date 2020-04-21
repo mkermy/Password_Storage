@@ -1,10 +1,16 @@
+#! /bin/env python3
+
 import os
 import sys
+import base64
 import pickle
 import hashlib
+import sqlite3
 from getpass import *
+from cryptography.fernet import Fernet
 
-passwords = []
+password = []
+
 
 
 def system():
@@ -27,7 +33,7 @@ def system():
         elif choices == "3":
             sure = input("\n Are You Sure You Want To Delete? ")
             if "y" in sure:
-                os.rmdir('acc/')
+                pass
                 print("Successfully Deleted...")
             else:
                 continue
@@ -42,9 +48,6 @@ def register(password_list):
         with open("auth.data", 'rb') as f:
             yn = input("Are You Sure Account Already Found (If You Type Yes The Account Will BE DELETED) ")
             os.remove("auth.data")
-    except KeyboardInterrupt:
-        print("\nKeyboard Interrupt")
-        sys.exit()
     except FileNotFoundError:
         yn = input("Do You Want To Register? ")
     while True:
@@ -108,7 +111,7 @@ def login(password_list):
 
 
 try:
-    login(passwords)
+    login(password)
 except KeyboardInterrupt:
     print("\nKeyboard Interrupt")
     sys.exit()
