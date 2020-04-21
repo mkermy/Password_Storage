@@ -6,11 +6,48 @@ import base64
 import pickle
 import hashlib
 import sqlite3
+import numpy as np
 from getpass import *
 from cryptography.fernet import Fernet
 
 password = []
 
+
+def account_add():
+    try:
+        os.mknod('acc/accounts.data')
+    except FileExistsError:
+        pass
+    except FileNotFoundError:
+        os.mkdir('acc/')
+
+    name = input('name: ')    
+    email = input('email: ')
+    passw = getpass('pass: ')
+
+    print(f'''
+ So Is This Correct
+ name: {name}
+ email: {email}
+ pass: {passw}
+    ''')
+    while True:
+        yes = input("y/N ")
+        yes = yes.lower()
+        if not yes or "n" in yes:
+            print("Alright Exiting")
+            break
+        elif "y" in yes:
+            with open('acc/accounts.data','rb') as f:
+                lines = f.readlines()
+            combo = f'{name} | {email} | {passw}\n' 
+            with open('acc/accounts.data', 'a') as f:
+                f.write(combo)
+            print("Added Files")
+            break
+        else:
+            pass
+            continue
 
 
 def system():
@@ -23,21 +60,33 @@ def system():
  1)Show All Accounts
  2)Add An Account
  3)Delete All Account
- 4)Exit
+ 4)Clear Lines
+ 5)Exit
         ''')
         choices = input(" > ")
         if choices == "1":
-            pass
+            try:
+                with open('acc/accounts.data','rb') as f:
+                    print("\n name   |  email  |  password")
+                    print("-------------------------------")
+                    for line in f: 
+                        print(line.decode())
+            except FileNotFoundError:
+                print("\nNo Accounts Found\n")
+                os.mknod('acc/accounts.data')
         elif choices == "2":
-            pass
+            account_add()
+
         elif choices == "3":
             sure = input("\n Are You Sure You Want To Delete? ")
             if "y" in sure:
-                pass
+                os.remove('acc/accounts.data')
                 print("Successfully Deleted...")
             else:
                 continue
         elif choices == "4":
+            os.system('cls' if os.name == 'nt' else 'clear')
+        elif choices == "5":
             sys.exit()
         else:
             continue
@@ -114,4 +163,5 @@ try:
     login(password)
 except KeyboardInterrupt:
     print("\nKeyboard Interrupt")
+    print("Exiting...")
     sys.exit()
