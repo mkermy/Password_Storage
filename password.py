@@ -3,15 +3,22 @@
 import os
 import sys
 import base64
+import random
 import pickle
 import hashlib
-import sqlite3
-import numpy as np
 from getpass import *
 from cryptography.fernet import Fernet
 
 password = []
+size = 0
 
+def password_generator(size):
+    chars = []
+    LETTERS = "!@#$%^&*()1234567890qwrtyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM!@#$%^&*()"
+    for i in range(size):
+        chars.append(random.choice(LETTERS))
+    password = "".join(chars)
+    return password
 
 def account_add():
     try:
@@ -21,16 +28,31 @@ def account_add():
     except FileNotFoundError:
         os.mkdir('acc/')
 
-    name = input('name: ')    
+    name = input('name: ')
     email = input('email: ')
-    passw = getpass('pass: ')
-
+    yesNo = input("Automatic Password Generation? ")
+    yesNo=yesNo.lower()
+    if "y" in yesNo:
+        letter_size = input("How many letters? ")
+        letter_size = int(letter_size)
+        try:
+            if letter_size >= 10:
+                print("Alright")
+                passw = password_generator(letter_size)
+            else:
+                print("Number Has To Be Over 10")
+        except TypeError:
+            print("Please Use A number")
+    elif "n" in yesNo:
+        print("Alright!")
+        passw = getpass('pass: ')
     print(f'''
  So Is This Correct
  name: {name}
  email: {email}
  pass: {passw}
     ''')
+
     while True:
         yes = input("y/N ")
         yes = yes.lower()
@@ -39,8 +61,8 @@ def account_add():
             break
         elif "y" in yes:
             with open('acc/accounts.data','rb') as f:
-                lines = f.readlines()
-            combo = f'{name} | {email} | {passw}\n' 
+                lines = f.read()
+            combo = f'{name} | {email} | {passw}\n'
             with open('acc/accounts.data', 'a') as f:
                 f.write(combo)
             print("Added Files")
@@ -69,7 +91,7 @@ def system():
                 with open('acc/accounts.data','rb') as f:
                     print("\n name   |  email  |  password")
                     print("-------------------------------")
-                    for line in f: 
+                    for line in f:
                         print(line.decode())
             except FileNotFoundError:
                 print("\nNo Accounts Found\n")
