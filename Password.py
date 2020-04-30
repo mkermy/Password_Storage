@@ -2,8 +2,10 @@
 
 import os
 import sys
-import hashlib
 import base64
+import string
+import hashlib
+import random
 from getpass import getpass
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -15,7 +17,7 @@ auth_file = 'auth.data'
 accounts_file = 'accounts.data'
 
 
-def password_generator(min_chars=25, max_chars=45):
+def password_generator(min_chars=25, max_chars=32):
     all_chars = string.ascii_letters + string.digits + string.punctuation
     random.seed = (os.urandom(1024))
     password = "".join(random.choice(all_chars)
@@ -29,19 +31,19 @@ def add_accounts(auth_file,accounts_file):
         name = input('Name: ')
         email = input('Email: ')
         while True:
-            gen = input('Auto Passgen ? ')
+            gen = input('Auto Password ? ')
             if "y" in gen:
-                password = getpass('Pass: ')
+                password = password_generator()
                 break
             elif "n" in gen:
-                password = input('Pass: ')
+                password = getpass('Pass: ')
                 break
             elif "n" in gen and "y" in gen:
                 print("Im Confused")
                 continue
             else:
                 continue
-        data = f'|  {name}  |  {email}  |  {Password}  |\n'
+        data = f'|  {name}  |  {email}  |  {password}  |\n'
 
         with open(accounts_file, 'a+') as f:
             f.write(data)
@@ -70,11 +72,13 @@ def system(auth_file,accounts_file):
         if choice in ["1","show"]:
             try:
                 with open(accounts_file) as f:
+                    print('\n_______________________________________')
+                    print('|  {name}  |  {email}  |  {password}  \n')
                     print(f.read())
             except FileNotFoundError:
                 print("No Accounts Found...")
         elif choice in ["2","add"]:
-            add_accounts(auth_file,accounts_file,key_file)
+            add_accounts(auth_file,accounts_file)
         elif choice in ["3","delete"]:
             print("\nDeleted...\n")
             os.remove(accounts_file)
@@ -131,13 +135,12 @@ def login(auth_file,accounts_file):
         if choice in ["1","login"]:
             password = getpass('\n [User] Password: ').encode()
             hashed_password = hashlib.sha3_512(password).hexdigest() #Hashing Password
-            print(hashed_password)
             if os.path.isfile(auth_file): #Looking For Password File
                 with open(auth_file, 'r') as auth: #Reading File
                     auth_data = auth.read()
                 if hashed_password == auth_data:
-                    print("Success")
-                    system(auth_file,accounts_file,key_file) #Start System
+                    print("\n Success")
+                    system(auth_file,accounts_file) #Start System
                     break
                 else:
                     print("Failed...")
@@ -145,7 +148,7 @@ def login(auth_file,accounts_file):
                 print("No Passwords Found")
                 os.mknod(auth_file)
         elif choice in ["2","register"]:
-            register(auth_file,accounts_file,key_file)
+            register(auth_file,accounts_file)
         elif choice in ["3","exit"]:
             exited = True
         else:
