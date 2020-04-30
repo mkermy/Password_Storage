@@ -41,7 +41,7 @@ def add_accounts(auth_file,accounts_file):
                 continue
             else:
                 continue
-        data = '|  {name}  |  {email}  |  {Password}  |\n'
+        data = f'|  {name}  |  {email}  |  {Password}  |\n'
 
         with open(accounts_file, 'a+') as f:
             f.write(data)
