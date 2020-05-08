@@ -13,9 +13,15 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.fernet import Fernet
 
 # Setting Directories
-auth_file = 'auth.data'
-accounts_file = 'accounts.data'
-key_file = "key.key"
+auth_file = 'auth/auth.data'
+accounts_file = 'accounts/accounts.data'
+key_file = "auth/key.key"
+
+try:
+    os.mkdir('auth/')
+    os.mkdir('accounts/')
+except FileExistsError:
+    pass
 
 def password_generator(min_chars=25, max_chars=32):
     all_chars = string.ascii_letters + string.digits + string.punctuation
@@ -74,6 +80,7 @@ def add_accounts(auth_file,accounts_file,key_file):
             combo = decrypted_data + data.encode() 
             combo_encrypted = fernet.encrypt(combo)
             f.write(combo_encrypted) # i want to die its been 7 hours i hope this works 
+            print("Success")
 
 def decoding(accounts_file,key_file):
     try:
@@ -86,7 +93,10 @@ def decoding(accounts_file,key_file):
             print(decrypted.decode()) 
     except:
         print("No accounts found...")
-        os.mknod(accounts_file)
+        try:
+            os.mknod(accounts_file)
+        except:
+            pass
         pass
 
 def system(auth_file,accounts_file,key_file):
@@ -119,10 +129,17 @@ def system(auth_file,accounts_file,key_file):
                 print("No Accounts Found...")
                 os.mknod(accounts_file)
         elif choice in ["2","add"]:
-            add_accounts(auth_file,accounts_file,key_file)
+            try:
+                add_accounts(auth_file,accounts_file,key_file)
+            except FileNotFoundError:
+                os.mknod(accounts_file)
+                print("\nNo accounts found...\n")
         elif choice in ["3","delete"]:
             print("\nDeleted...\n")
-            os.remove(accounts_file)
+            try:
+                os.remove(accounts_file)
+            except FileNotFoundError:
+                pass
             os.mknod(accounts_file)
         elif choice in ["4","exit"]:
             exited = True
