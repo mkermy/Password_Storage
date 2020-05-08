@@ -15,7 +15,7 @@ from cryptography.fernet import Fernet
 # Setting Directories
 auth_file = 'auth.data'
 accounts_file = 'accounts.data'
-
+key_file = "key.key"
 
 def password_generator(min_chars=25, max_chars=32):
     all_chars = string.ascii_letters + string.digits + string.punctuation
@@ -25,7 +25,7 @@ def password_generator(min_chars=25, max_chars=32):
     return password
 
 
-def add_accounts(auth_file,accounts_file):
+def add_accounts(auth_file,accounts_file,key_file):
     if os.path.isfile(accounts_file) :
 
         name = input('Name: ')
@@ -43,13 +43,53 @@ def add_accounts(auth_file,accounts_file):
                 continue
             else:
                 continue
-        data = f'|  {name}  |  {email}  |  {password}  |\n'
+        data = f'\n|  {name}  |  {email}  |  {password}  |\n'
 
-        with open(accounts_file, 'a+') as f:
-            f.write(data)
+        with open(auth_file,'r+') as f:
+            password = f.read() # reading hashed password
+            salt = b'\xcc\x84f\xcds!\xb2d\xea\xcck,\x14\xac!H'
+            kdf = PBKDF2HMAC(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=salt,
+                iterations=100000,
+                backend=default_backend()
+            ) # idk this is the tutorial said
 
+            with open(key_file,'wb') as keyFile:
+                key = kdf.derive(password.encode()) # deriving key from passwor
+                key = base64.urlsafe_b64encode(key) # base64 encrypting
+                keyFile.write(key) # wrting key
+                fernet = Fernet(key) 
 
-def system(auth_file,accounts_file):
+        with open(accounts_file,'ab') as f: # Writing Intail thing
+            f.write(fernet.encrypt(b"."))
+
+        with open(accounts_file,'rb+') as f: # First Read
+            current_data = f.read() # reading current data
+            decrypted_data = fernet.decrypt(current_data) # decrypting it
+
+        # where it all went to shit
+        with open(accounts_file,'wb+') as f:
+            combo = decrypted_data + data.encode() 
+            combo_encrypted = fernet.encrypt(combo)
+            f.write(combo_encrypted) # i want to die its been 7 hours i hope this works 
+
+def decoding(accounts_file,key_file):
+    try:
+        with open(key_file,'rb') as f:
+            key = f.read()
+        fernet = Fernet(key)
+        with open(accounts_file,'rb') as f:
+            data = f.read()
+            decrypted = fernet.decrypt(data) # decoding the data
+            print(decrypted.decode()) 
+    except:
+        print("No accounts found...")
+        os.mknod(accounts_file)
+        pass
+
+def system(auth_file,accounts_file,key_file):
     print('''
  |=============|
  |     |||     |
@@ -74,11 +114,12 @@ def system(auth_file,accounts_file):
                 with open(accounts_file) as f:
                     print('\n_______________________________________')
                     print('|  {name}  |  {email}  |  {password}  \n')
-                    print(f.read())
+                decoding(accounts_file,key_file)
             except FileNotFoundError:
                 print("No Accounts Found...")
+                os.mknod(accounts_file)
         elif choice in ["2","add"]:
-            add_accounts(auth_file,accounts_file)
+            add_accounts(auth_file,accounts_file,key_file)
         elif choice in ["3","delete"]:
             print("\nDeleted...\n")
             os.remove(accounts_file)
@@ -99,8 +140,8 @@ def register(auth_file,accounts_file):
                 os.remove(accounts_file)
                 os.mknod(auth_file)
                 os.mknod(accounts_file)
-            elif "y" in yn and "n" in yn: #Making sure people don't use yesn't
-                print(" Im Confused...")
+            elif "n" in yn:
+                pass
             else:
                 pass
     except FileNotFoundError:
@@ -122,7 +163,7 @@ def register(auth_file,accounts_file):
             continue
 
 
-def login(auth_file,accounts_file):
+def login(auth_file,accounts_file,key_file):
     exited = False
 
     print('''
@@ -140,7 +181,7 @@ def login(auth_file,accounts_file):
                     auth_data = auth.read()
                 if hashed_password == auth_data:
                     print("\n Success")
-                    system(auth_file,accounts_file) #Start System
+                    system(auth_file,accounts_file,key_file) #Start System
                     break
                 else:
                     print("Failed...")
@@ -156,6 +197,6 @@ def login(auth_file,accounts_file):
 
 
 try:
-    login(auth_file,accounts_file)
+    login(auth_file,accounts_file,key_file)
 except KeyboardInterrupt:
     print("Exiting...")
